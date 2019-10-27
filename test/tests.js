@@ -9,7 +9,7 @@ var fs = require('fs');
 
 var blockhash = require('..');
 
-var PNG = require('png-js');
+var PNG = require('pngjs').PNG;
 var jpeg = require('jpeg-js');
 
 var testFiles = glob.sync('test/data/*.jpg')
@@ -36,16 +36,12 @@ testFiles.forEach(function(fn) {
 
                 case '.png':
                     getImgData = function(next) {
-                        var png = new PNG(data);
-                        var imgData = {
-                            width: png.width,
-                            height: png.height,
-                            data: new Uint8Array(png.width * png.height * 4)
-                        };
-
-                        png.decodePixels(function(pixels) {
-                            png.copyToImageData(imgData, pixels);
-                            next(imgData);
+                        new PNG().parse(data, (err, data) => {
+                            next({
+                                width: data.width,
+                                height: data.height,
+                                data: [...data.data]
+                            });
                         });
                     };
                 }

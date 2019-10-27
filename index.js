@@ -4,7 +4,7 @@
 // Copyright 2014 Commons Machinery http://commonsmachinery.se/
 // Distributed under an MIT license, please see LICENSE in the top dir.
 
-var PNG = require('png-js');
+var PNG = require('pngjs/browser').PNG;
 var jpeg = require('jpeg-js');
 
 var one_bits = [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
@@ -224,22 +224,20 @@ var blockhash = function(src, bits, method, callback) {
     xhr.responseType = "arraybuffer";
 
     xhr.onload = function() {
-        var data, contentType, imgData, jpg, png, hash;
+        var data, contentType, imgData, png, hash;
 
         data = new Uint8Array(xhr.response || xhr.mozResponseArrayBuffer);
         contentType = xhr.getResponseHeader('content-type');
 
         try {
             if (contentType === 'image/png') {
-                png = new PNG(data);
+                png = PNG.sync.read(data);
 
                 imgData = {
                     width: png.width,
                     height: png.height,
-                    data: new Uint8Array(png.width * png.height * 4)
+                    data: [...png.data]
                 };
-
-                png.copyToImageData(imgData, png.decodePixels());
             }
             else if (contentType === 'image/jpeg') {
                 imgData = jpeg.decode(data);
@@ -252,6 +250,8 @@ var blockhash = function(src, bits, method, callback) {
             // TODO: resize if required
 
             hash = blockhashData(imgData, bits, method);
+            console.log(hash);
+
             callback(null, hash);
         } catch (err) {
             callback(err, null);
